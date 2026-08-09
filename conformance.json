@@ -1,0 +1,15 @@
+{
+  "language": "rust",
+  "matrixVersion": "ores.otel.test-repository/v1",
+  "name": "ores-otel-log-rust-test",
+  "requireExactHeadChecks": true,
+  "requireNoMonkeyPatching": true,
+  "runtime": "Rust stable, beta, and MSRV",
+  "sources": [
+    "ores-otel/ores.otel.log",
+    "ORESoftware/next-loggers.ts"
+  ],
+  "status": "seeded",
+  "testCommand": "cargo test --all-features && cargo clippy --all-targets --all-features -- -D warnings",
+  "toolchain": "cargo"
+}
