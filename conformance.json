@@ -8,6 +8,10 @@
     "lifecycle",
     "concurrency"
   ],
+  "exactHeads": {
+    "canonical": "05f14768232b770dfc2bbe03f27b388f5a701c74",
+    "legacy": "05f14768232b770dfc2bbe03f27b388f5a701c74"
+  },
   "language": "rust",
   "name": "ores-otel-log-rust-test",
   "runtime": "Rust stable, beta, and MSRV",
@@ -15,7 +19,7 @@
     "ores-otel/ores.otel.log",
     "ORESoftware/next-loggers.ts"
   ],
-  "status": "planned",
+  "status": "created",
   "testCommand": "cargo test --all-features && cargo clippy --all-targets --all-features -- -D warnings",
   "toolchain": "cargo"
 }
