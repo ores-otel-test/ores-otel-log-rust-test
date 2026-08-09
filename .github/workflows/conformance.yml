@@ -24,10 +24,10 @@ jobs:
       matrix:
         include:
           - repository: ores-otel/ores.otel.log
-            ref: 16632bad9f2dbca6826163ed4fa588629afba646
+            ref: 2d8b394a9e846b149b734fe8222387fb4aef7cea
             role: canonical
           - repository: ORESoftware/next-loggers.ts
-            ref: a0a6a697f0a7feb7ea769dcbef4d368e6205db74
+            ref: 61aa23ebc748e74fe04e452c206dc1c1f92bf576
             role: legacy
     steps:
       - uses: actions/checkout@v7
