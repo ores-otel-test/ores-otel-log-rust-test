@@ -1,26 +1,15 @@
 {
-  "automatic_instrumentation": false,
-  "capabilities": [
-    "record-schema",
-    "api-manifest",
-    "context-isolation",
-    "otel-explicit",
-    "no-monkey-patching",
-    "lifecycle",
-    "concurrency"
-  ],
-  "exact_heads": {
-    "canonical": "be37556eeeaa77c2fc57feda96239b69cca8e9ac",
-    "legacy": "be37556eeeaa77c2fc57feda96239b69cca8e9ac"
-  },
   "language": "rust",
-  "no_monkey_patching": true,
-  "repository": "ores-otel-test/ores-otel-log-rust-test",
-  "runtime": "Rust stable",
-  "schema_version": 1,
+  "matrixVersion": "ores.otel.test-repository/v1",
+  "name": "ores-otel-log-rust-test",
+  "requireExactHeadChecks": true,
+  "requireNoMonkeyPatching": true,
+  "runtime": "Rust stable, beta, and MSRV",
   "sources": [
     "ores-otel/ores.otel.log",
     "ORESoftware/next-loggers.ts"
   ],
-  "test_command": "cargo test --manifest-path sdk/rust/Cargo.toml"
+  "status": "seeded",
+  "testCommand": "cargo test --all-features && cargo clippy --all-targets --all-features -- -D warnings",
+  "toolchain": "cargo"
 }
