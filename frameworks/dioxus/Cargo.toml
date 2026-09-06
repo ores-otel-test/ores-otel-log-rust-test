@@ -1,0 +1,16 @@
+[package]
+name = "ores-otel-dioxus-compile-probe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[features]
+default = []
+web = ["dioxus/web", "ores-otel-web/browser"]
+ssr = ["dioxus/ssr"]
+
+[dependencies]
+dioxus = { version = "=0.7.10", default-features = false, features = ["minimal"] }
+ores-otel-web = { git = "https://github.com/ores-otel/ores.otel.log", rev = "c57fc23ab1616e358488a40f8bdfbd8d2a94439c", default-features = false }

@@ -1,0 +1,55 @@
+name: Rust WASM external consumer
+on:
+  pull_request:
+    paths: ['web-bridge/**', 'frameworks/**', '.github/workflows/web-bridge-consumer.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install stable --profile minimal
+      - run: cargo +stable test --manifest-path web-bridge/Cargo.toml --features native
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown
+      - run: cargo +stable install wasm-pack --locked
+      - run: wasm-pack test --headless --chrome web-bridge --features browser
+  frameworks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - framework: leptos
+            feature: csr
+            target: wasm32-unknown-unknown
+          - framework: leptos
+            feature: hydrate
+            target: wasm32-unknown-unknown
+          - framework: leptos
+            feature: ssr
+            target: x86_64-unknown-linux-gnu
+          - framework: dioxus
+            feature: web
+            target: wasm32-unknown-unknown
+          - framework: dioxus
+            feature: ssr
+            target: x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install stable --profile minimal --target ${{ matrix.target }}
+      - run: cargo +stable check --manifest-path frameworks/${{ matrix.framework }}/Cargo.toml --no-default-features --features ${{ matrix.feature }} --target ${{ matrix.target }}
