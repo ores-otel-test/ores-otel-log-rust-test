@@ -12,10 +12,10 @@ native = ["ores-otel-web/axum"]
 browser = ["ores-otel-web/browser"]
 
 [dependencies]
-ores-otel-web = { git = "https://github.com/ores-otel/ores.otel.log", rev = "c57fc23ab1616e358488a40f8bdfbd8d2a94439c", default-features = false }
+ores-otel-web = { git = "https://github.com/ores-otel/ores.otel.log", rev = "74bc1c421f5a56be28cade1a47f5d45de51f3b4b", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-next-loggers = { package = "oresoftware-next-loggers", git = "https://github.com/ores-otel/ores.otel.log", rev = "c57fc23ab1616e358488a40f8bdfbd8d2a94439c" }
+next-loggers = { package = "oresoftware-next-loggers", git = "https://github.com/ores-otel/ores.otel.log", rev = "74bc1c421f5a56be28cade1a47f5d45de51f3b4b" }
 axum = "0.8"
 tokio = { version = "1", features = ["macros", "rt", "sync"] }
 tower = { version = "0.5", features = ["util"] }
