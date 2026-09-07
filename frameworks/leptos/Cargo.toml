@@ -1,0 +1,17 @@
+[package]
+name = "ores-otel-leptos-compile-probe"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[features]
+default = []
+csr = ["leptos/csr", "ores-otel-web/browser"]
+hydrate = ["leptos/hydrate", "ores-otel-web/browser"]
+ssr = ["leptos/ssr"]
+
+[dependencies]
+leptos = { version = "=0.8.20", default-features = false }
+ores-otel-web = { git = "https://github.com/ores-otel/ores.otel.log", rev = "74bc1c421f5a56be28cade1a47f5d45de51f3b4b", default-features = false }
