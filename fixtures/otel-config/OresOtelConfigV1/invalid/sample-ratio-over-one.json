@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "client": {
+    "enabled": true,
+    "tracing": {
+      "enabled": true,
+      "sample_ratio": 1.25,
+      "propagators": ["tracecontext"]
+    }
+  }
+}
