@@ -1,0 +1,56 @@
+name: OTel config public fixture producer
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixtures:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact fixture head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          show-progress: false
+
+      - name: Verify exact head and fixture syntax
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git diff --check
+          jq -e . fixtures/otel-config/OresOtelConfigV1/valid/rust-logger.json >/dev/null
+          jq -e . fixtures/otel-config/OresOtelConfigV1/invalid/sample-ratio-over-one.json >/dev/null
+
+      - name: Require meaningful public consumer examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          valid=fixtures/otel-config/OresOtelConfigV1/valid/rust-logger.json
+          invalid=fixtures/otel-config/OresOtelConfigV1/invalid/sample-ratio-over-one.json
+          test "$(jq -r '.version' "$valid")" = "1"
+          jq -e '.common.tracing.sample_ratio >= 0 and .common.tracing.sample_ratio <= 1' "$valid" >/dev/null
+          jq -e '.common.exporter.endpoint_env == "OTEL_EXPORTER_OTLP_ENDPOINT"' "$valid" >/dev/null
+          jq -e '.client.tracing.sample_ratio > 1' "$invalid" >/dev/null
+          if grep -Eiq 'password|access[_-]?token|refresh[_-]?token|api[_-]?key|client[_-]?secret|private[_-]?key' "$valid" "$invalid"; then
+            echo 'public OTel fixture contains a credential-shaped field' >&2
+            exit 1
+          fi
+
+      - name: Retain immutable fixture evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: otel-config-public-fixtures-${{ github.event.pull_request.head.sha || github.sha }}
+          path: fixtures/otel-config
+          if-no-files-found: error
+          retention-days: 30
