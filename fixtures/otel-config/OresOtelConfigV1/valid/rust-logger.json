@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "common": {
+    "enabled": true,
+    "service_name": "ores-otel-log-rust-test",
+    "environment": "test",
+    "logging": {
+      "enabled": true,
+      "level": "info",
+      "console": true,
+      "auto_send": false
+    },
+    "tracing": {
+      "enabled": true,
+      "sample_ratio": 0.5,
+      "propagators": ["tracecontext", "baggage"]
+    },
+    "metrics": {
+      "enabled": true
+    },
+    "exporter": {
+      "protocol": "otlp",
+      "endpoint_env": "OTEL_EXPORTER_OTLP_ENDPOINT"
+    }
+  }
+}
