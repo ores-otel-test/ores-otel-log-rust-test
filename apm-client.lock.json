@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "client": {
+    "repository": "ores-otel/ores-otel-clients",
+    "revision": "0a457125a8385bc26ae461273d29beacf67e1e9b",
+    "path": "clients/rust"
+  },
+  "authority": {
+    "repository": "ores-otel/ores-interfaces",
+    "revision": "942428dc36face4fb50eaac433e6219db648748a",
+    "typespec": "contracts/ores-apm/v1/ores-apm.tsp",
+    "jsonSchema": "contracts/ores-apm/v1/ores-apm.schema.json",
+    "fixture": "contracts/ores-apm/v1/example.snapshot.json"
+  }
+}

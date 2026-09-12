@@ -1,0 +1,115 @@
+name: APM Rust client canary
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/apm-rust-client.yml"
+      - "apm-client.lock.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apm-rust-client.yml"
+      - "apm-client.lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust-apm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact canary revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Read immutable dependency lock
+        id: lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          client_revision="$(jq -er '.client.revision' apm-client.lock.json)"
+          authority_revision="$(jq -er '.authority.revision' apm-client.lock.json)"
+          [[ "$client_revision" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$authority_revision" =~ ^[0-9a-f]{40}$ ]]
+          printf 'client_revision=%s\n' "$client_revision" >> "$GITHUB_OUTPUT"
+          printf 'authority_revision=%s\n' "$authority_revision" >> "$GITHUB_OUTPUT"
+      - name: Check out exact client source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ores-otel/ores-otel-clients
+          ref: ${{ steps.lock.outputs.client_revision }}
+          path: .deps/clients
+          persist-credentials: false
+      - name: Check out exact APM peer authority
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ores-otel/ores-interfaces
+          ref: ${{ steps.lock.outputs.authority_revision }}
+          path: .deps/interfaces
+          persist-credentials: false
+      - name: Verify both authored peer authorities exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          typespec=".deps/interfaces/$(jq -er '.authority.typespec' apm-client.lock.json)"
+          schema=".deps/interfaces/$(jq -er '.authority.jsonSchema' apm-client.lock.json)"
+          fixture=".deps/interfaces/$(jq -er '.authority.fixture' apm-client.lock.json)"
+          test -s "$typespec"
+          test -s "$schema"
+          test -s "$fixture"
+          grep -F 'namespace OresOtel.Apm.V1' "$typespec"
+          jq -e '."$schema" == "https://json-schema.org/draft/2020-12/schema" and (."$defs".ApmSnapshot != null)' "$schema" >/dev/null
+      - name: Set up pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c
+        with:
+          toolchain: 1.98.1
+          components: rustfmt, clippy
+      - name: Test source package directly
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo fmt --manifest-path .deps/clients/clients/rust/Cargo.toml --all -- --check
+          cargo clippy --manifest-path .deps/clients/clients/rust/Cargo.toml --all-targets -- -D warnings
+          cargo test --manifest-path .deps/clients/clients/rust/Cargo.toml --all-targets
+      - name: Compile independent consumer against canonical APM fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          consumer="$RUNNER_TEMP/ores-apm-rust-consumer"
+          mkdir -p "$consumer/src"
+          cat > "$consumer/Cargo.toml" <<EOF
+          [package]
+          name = "ores-apm-rust-consumer-canary"
+          version = "0.0.0"
+          edition = "2021"
+
+          [dependencies]
+          ores-otel-client = { path = "$GITHUB_WORKSPACE/.deps/clients/clients/rust" }
+          serde_json = "1"
+          EOF
+          cat > "$consumer/src/main.rs" <<'EOF'
+          use ores_otel_client::ApmSnapshot;
+
+          fn main() {
+              let fixture = std::fs::read_to_string(
+                  std::env::var("APM_FIXTURE").expect("APM_FIXTURE is required"),
+              )
+              .expect("read fixture");
+              let snapshot: ApmSnapshot = serde_json::from_str(&fixture).expect("decode APM fixture");
+              assert_eq!(snapshot.schema_version, 1);
+              assert_eq!(snapshot.observed_at_unix_nano, "1789150000000000000");
+              assert!(!snapshot.process.memory_usage_bytes.is_empty());
+              assert!(!snapshot.filesystems.is_empty());
+              assert!(!snapshot.service.latency_seconds.buckets.is_empty());
+          }
+          EOF
+          APM_FIXTURE="$GITHUB_WORKSPACE/.deps/interfaces/$(jq -er '.authority.fixture' apm-client.lock.json)" \
+            cargo run --quiet --manifest-path "$consumer/Cargo.toml"
+      - name: Prove source dependencies were not rewritten
+        shell: bash
+        run: |
+          test -z "$(git -C .deps/clients status --porcelain=v1 --untracked-files=no)"
+          test -z "$(git -C .deps/interfaces status --porcelain=v1 --untracked-files=no)"
